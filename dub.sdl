@@ -1,0 +1,8 @@
+name "simple-queue"
+description "Simple Queue Manager"
+authors "Aravinda VK <mail@aravindavk.in>"
+copyright "Copyright © 2024, Aravinda VK <mail@aravindavk.in>"
+license "MIT"
+targetType "library"
+dependency "vibe-serialization" version="~>1.0.4"
+dependency "dpq2-serialization" version="~>0.2.1"
