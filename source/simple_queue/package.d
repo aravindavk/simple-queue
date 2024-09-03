@@ -54,7 +54,7 @@ template registerQueues(QueueTypes...)
 
     sw: switch(jobData["_name"].to!string)
         {
-            static foreach(T; JobTypes)
+            static foreach(T; QueueTypes)
             {
                 mixin("
                 case \"" ~ __traits(fullyQualifiedName, T) ~ "\":
