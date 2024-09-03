@@ -103,7 +103,7 @@ subPackage {
     targetType "executable"
     mainSourceFile "source/worker.d"
     excludedSourceFiles "source/app.d"
-    dependency simplejob version="~>0.1.0"
+    dependency simple-queue version="~>0.1.0"
 }
 ```
 
