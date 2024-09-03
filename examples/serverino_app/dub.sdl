@@ -1,0 +1,19 @@
+name "serverino_app"
+description "Serverino SimpleQueue example"
+authors "Aravinda VK <mail@aravindavk.in>"
+copyright "Copyright © 2024, Aravinda VK <mail@aravindavk.in>"
+license "MIT"
+mainSourceFile "source/app.d"
+excludedSourceFiles "source/worker.d"
+
+dependency "serverino" version="~>0.7.10"
+dependency "simple-queue" path="../../"
+
+subPackage {
+    name "worker"
+    targetType "executable"
+    mainSourceFile "source/worker.d"
+    excludedSourceFiles "source/app.d"
+
+    dependency "simple-queue" path="../../"
+}
