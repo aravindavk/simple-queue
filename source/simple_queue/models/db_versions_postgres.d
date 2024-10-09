@@ -1,6 +1,8 @@
-module simple_queue.models.db_versions;
+module simple_queue.models.db_versions_postgres;
 
-import simple_queue.models.helpers;
+version (Postgres):
+
+import simple_queue.models.helpers_postgres;
 
 struct DbVersion
 {
@@ -38,7 +40,7 @@ struct DbVersion
         auto query = "UPDATE simpleQueue_schema_migration SET id = $1, createdAt = current_timestamp";
         execute(query, id);
     }
-
+   
     static void set(int versionId)
     {
         auto currentVersion = DbVersion.get;

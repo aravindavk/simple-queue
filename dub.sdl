@@ -4,5 +4,19 @@ authors "Aravinda VK <mail@aravindavk.in>"
 copyright "Copyright © 2024, Aravinda VK <mail@aravindavk.in>"
 license "MIT"
 targetType "library"
-dependency "vibe-serialization" version="~>1.0.4"
-dependency "dpq2-serialization" version="~>0.2.1"
+
+subPackage {
+    name "postgres"
+    targetType "library"
+    dependency "dpq2-serialization" version="~>0.2.1"
+    dependency "json-serialization" path="../json-serialization-d"
+    versions "Postgres"
+}
+
+subPackage {
+    name "sqlite"
+    targetType "library"
+    dependency "d2sqlite3" version="~>1.0.0"
+    dependency "json-serialization" path="../json-serialization-d"
+    versions "SQLite"
+}

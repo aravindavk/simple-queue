@@ -15,3 +15,6 @@ serverino_app-test-*
 *.o
 *.obj
 *.lst
+*.db
+*.db-wal
+*.db-shm

@@ -7,31 +7,16 @@ interface SimpleQueue
 
 void performLater(T)(T jobdata)
 {
-    import vibe.data.json;
-
     import simple_queue.models;
 
+    import json_serialization;
+
     Job job;
-    job.payload = jobdata.serializeToJson;
+    job.payload = jobdata.serializeToJSONValue;
     job.payload["_name"] = __traits(fullyQualifiedName, T);
 
     job.enqueue;
 }
-
-const MIGRATIONS = [
-    q"[CREATE TABLE simpleQueueJobs(
-           id                 BIGSERIAL PRIMARY KEY,
-           payload            JSON,
-           priority           INTEGER,
-           threadId           INTEGER,
-           state              VARCHAR,
-           error              TEXT,
-           durationMs         BIGINT,
-           createdAt          TIMESTAMP DEFAULT current_timestamp,
-           updatedAt          TIMESTAMP DEFAULT current_timestamp
-       )
-      ]"
-];
 
 template registerQueues(QueueTypes...)
 {
@@ -43,27 +28,28 @@ template registerQueues(QueueTypes...)
     import std.conv;
     import std.concurrency;
     import core.thread : Thread;
+    import std.json;
 
-    import vibe.data.json;
+    import json_serialization;
 
     import simple_queue.models;
 
-    void perform(Json jobData)
+    void perform(JSONValue jobData)
     {
         SimpleQueue payload;
 
-    sw: switch(jobData["_name"].to!string)
+    sw: switch(jobData["_name"].str)
         {
             static foreach(T; QueueTypes)
             {
                 mixin("
                 case \"" ~ __traits(fullyQualifiedName, T) ~ "\":
-                    payload = deserializeJson!(" ~ __traits(fullyQualifiedName, T) ~")(jobData);
+                    payload = deserializeJSONValue!(" ~ __traits(fullyQualifiedName, T) ~")(jobData);
                     break sw;
             ");
             }
         default:
-            throw new Exception("Unsupported Job " ~ jobData["_name"].to!string);
+            throw new Exception("Unsupported Job " ~ jobData["_name"].str);
         }
 
         payload.perform;
@@ -129,22 +115,6 @@ template registerQueues(QueueTypes...)
                 currentWorker = 0;
 
             return worker;
-        }
-
-        private void handleMigrations()
-        {
-            DbVersion.initialize; 
-            auto currentVersion = DbVersion.get;
-
-            foreach(idx; 0 .. MIGRATIONS.length.to!int)
-            {
-                // Already applied version
-                if (idx + 1 <= currentVersion)
-                    continue;
-
-                execute(MIGRATIONS[idx]);
-                DbVersion.set(idx+1);
-            }
         }
 
         void start()

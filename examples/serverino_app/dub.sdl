@@ -3,17 +3,14 @@ description "Serverino SimpleQueue example"
 authors "Aravinda VK <mail@aravindavk.in>"
 copyright "Copyright © 2024, Aravinda VK <mail@aravindavk.in>"
 license "MIT"
+dependency "serverino" version="~>0.7.11"
+dependency "simple-queue:sqlite" path="../../"
 mainSourceFile "source/app.d"
 excludedSourceFiles "source/worker.d"
-
-dependency "serverino" version="~>0.7.10"
-dependency "simple-queue" path="../../"
-
 subPackage {
-    name "worker"
-    targetType "executable"
-    mainSourceFile "source/worker.d"
-    excludedSourceFiles "source/app.d"
-
-    dependency "simple-queue" path="../../"
+	name "worker"
+	dependency "simple-queue:sqlite" path="../../"
+	targetType "executable"
+	mainSourceFile "source/worker.d"
+	excludedSourceFiles "source/app.d"
 }
