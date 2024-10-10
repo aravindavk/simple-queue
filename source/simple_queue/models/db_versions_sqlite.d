@@ -16,19 +16,19 @@ struct DbVersion
                 createdAt     DATETIME DEFAULT current_timestamp
             )
         ]";
-        execute(query);
+        _db.execute(query);
     }
 
     void create()
     {
         auto query = "INSERT INTO simpleQueue_schema_migration(id) VALUES(:id)";
-        execute(query, id);
+        _db.execute(query, id);
     }
 
     static int get()
     {
         auto query = "SELECT * FROM simpleQueue_schema_migration";
-        auto rs = execute(query);
+        auto rs = _db.execute(query);
         if (!rs.empty)
             return rs.front["id"].as!int;
 
@@ -38,10 +38,9 @@ struct DbVersion
     void update()
     {
         auto query = "UPDATE simpleQueue_schema_migration SET id = :id, createdAt = current_timestamp";
-        execute(query, id);
+        _db.execute(query, id);
     }
 
-    
     static void set(int versionId)
     {
         auto currentVersion = DbVersion.get;

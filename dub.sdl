@@ -17,6 +17,7 @@ subPackage {
     name "sqlite"
     targetType "library"
     dependency "d2sqlite3" version="~>1.0.0"
+    dependency "sqlite-utils" path="../sqlite-utils"
     dependency "json-serialization" path="../json-serialization-d"
     versions "SQLite"
 }

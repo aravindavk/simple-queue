@@ -57,7 +57,7 @@ void handleMigrations()
         if (idx + 1 <= currentVersion)
             continue;
 
-        execute(MIGRATIONS[idx]);
+        _db.execute(MIGRATIONS[idx]);
         DbVersion.set(idx+1);
     }
 }

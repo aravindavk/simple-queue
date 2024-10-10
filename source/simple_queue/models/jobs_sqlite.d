@@ -21,7 +21,7 @@ struct Job
             VALUES (:payload, :priority, :threadId, :state, :error) RETURNING *
         ]";
 
-        auto rs = execute(query, payload, priority, threadId, state, error);
+        auto rs = _db.execute(query, payload, priority, threadId, state, error);
         enforceDB(!rs.empty, "Failed to add the job");
 
         id = rs.front["id"].as!long;
@@ -38,7 +38,7 @@ struct Job
                 updatedAt = current_timestamp
             WHERE id = :id
             ]";
-        execute(query, state, error, durationMs, threadId, id);
+        _db.execute(query, state, error, durationMs, threadId, id);
     }
 
     static Job[] listNew()
@@ -48,7 +48,7 @@ struct Job
             ]";
         QuerySettings settings;
         settings.printDebugQuery = false;
-        auto rs = execute(settings, query, "accepted");
+        auto rs = _db.execute(settings, query, "accepted");
 
         Job[] jobs;
         foreach (row; rs)

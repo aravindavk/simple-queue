@@ -14,26 +14,3 @@ void enforceDB(bool cond, string message)
         throw new ModelException(message);
 }
 
-string formatArgs(Targs...)(Targs args)
-{
-    import std.conv;
-    import std.string;
-
-    string[] data;
-    string field = "";
-    static foreach(idx, arg; args)
-    {
-        if (is(Targs[idx] == string))
-            field = "\"" ~ arg.to!string ~ "\"";
-        else
-            field = arg.to!string;
-
-        data ~= "$" ~ (idx+1).to!string ~ "=" ~ field;
-    }
-    return data.join(", ");
-}
-
-struct QuerySettings
-{
-    bool printDebugQuery = true;
-}
