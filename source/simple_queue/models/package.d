@@ -2,47 +2,39 @@ module simple_queue.models;
 
 public
 {
-    import simple_queue.models.helpers_postgres;
-    import simple_queue.models.jobs_postgres;
-    import simple_queue.models.db_versions_postgres;
-    import simple_queue.models.helpers_sqlite;
-    import simple_queue.models.jobs_sqlite;
-    import simple_queue.models.db_versions_sqlite;
+    import simple_queue.models.helpers;
+    import simple_queue.models.jobs;
+    import simple_queue.models.db_versions;
 }
 
-version(Postgres)
-{
-    const MIGRATIONS = [
-        q"[CREATE TABLE simpleQueueJobs(
+const MIGRATIONS = [
+    q"[CREATE TABLE simpleQueueJobs(
            id                 BIGSERIAL PRIMARY KEY,
-           payload            JSON,
-           priority           INTEGER,
-           threadId           INTEGER,
-           state              VARCHAR,
-           error              TEXT,
+           parentId           BIGINT DEFAULT 0,
+           payload            TEXT,
+           priority           INTEGER DEFAULT 0,
+           workerId           INTEGER,
+           state              VARCHAR DEFAULT 'accepted',
            durationMs         BIGINT,
            createdAt          TIMESTAMP DEFAULT current_timestamp,
+           claimedAt          TIMESTAMP,
+           finishedAt         TIMESTAMP,
            updatedAt          TIMESTAMP DEFAULT current_timestamp
-           )]"
-        ];
-}
-
-version(SQLite)
-{
-    const MIGRATIONS = [
-        q"[CREATE TABLE simpleQueueJobs(
-           id                 INTEGER PRIMARY KEY,
-           payload            JSON,
-           priority           INTEGER,
-           threadId           INTEGER,
-           state              VARCHAR,
-           error              TEXT,
-           durationMs         BIGINT,
-           createdAt          TIMESTAMP DEFAULT current_timestamp,
-           updatedAt          TIMESTAMP DEFAULT current_timestamp
-        )]"
-        ];
-}
+           )]",
+    q"[CREATE TABLE simpleQueueReadyJobs(
+          jobId       BIGINT REFERENCES simpleQueueJobs(id)
+    )]",
+    q"[CREATE TABLE simpleQueueClaimedJobs(
+          jobId       BIGINT REFERENCES simpleQueueJobs(id),
+          workerId    INTEGER
+    )]",
+    q"[CREATE TABLE simpleQueueFailedJobs(
+          jobId       BIGINT REFERENCES simpleQueueJobs(id),
+          workerId    INTEGER,
+          error       TEXT,
+          createdAt   TIMESTAMP DEFAULT current_timestamp
+    )]"
+    ];
 
 void handleMigrations()
 {
@@ -57,7 +49,7 @@ void handleMigrations()
         if (idx + 1 <= currentVersion)
             continue;
 
-        _db.execute(MIGRATIONS[idx]);
+        execute(MIGRATIONS[idx]);
         DbVersion.set(idx+1);
     }
 }

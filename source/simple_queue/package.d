@@ -1,5 +1,9 @@
 module simple_queue;
 
+import std.process;
+
+import simple_queue.models;
+
 interface SimpleQueue
 {
     void perform();
@@ -7,13 +11,12 @@ interface SimpleQueue
 
 void performLater(T)(T jobdata)
 {
-    import simple_queue.models;
-
     import json_serialization;
 
     Job job;
-    job.payload = jobdata.serializeToJSONValue;
-    job.payload["_name"] = __traits(fullyQualifiedName, T);
+    auto payload = jobdata.serializeToJSONValue;
+    payload["_name"] = __traits(fullyQualifiedName, T);
+    job.payload = payload.toString;
 
     job.enqueue;
 }
@@ -57,30 +60,35 @@ template registerQueues(QueueTypes...)
 
     void worker(int workerId)
     {
+        infof("Started worker %d", workerId);
+
         while (true)
         {
-            auto job = cast(Job) receiveOnly!(immutable(Job));
-            // Update the started state
-            job.state = "started";
-            job.threadId = workerId;
-            job.update;
+            auto job_ = Job.getNew(workerId);
+            if (job_.isNull)
+            {
+                Thread.sleep(dur!("seconds")(5));
+                continue;
+            }
+
+            auto job = job_.get;
 
             auto startTime = Clock.currTime(UTC());
+            auto payload = parseJSON(job.payload);
+            tracef("Worker %d found a Job(%s)", workerId, payload["_name"]);
 
             try
             {
-                job.payload.perform;
-                job.state = "completed";
+                payload.perform;
+                job.durationMs = (Clock.currTime(UTC()) - startTime).total!"msecs";
+                job.recordComplete;
             }
             catch (Exception ex)
             {
-                job.error = ex.to!string;
-                job.state = "failed";
+                string error = ex.to!string;
+                job.durationMs = (Clock.currTime(UTC()) - startTime).total!"msecs";
+                job.recordFailure(error);
             }
-
-            job.durationMs = (Clock.currTime(UTC()) - startTime).total!"msecs";
-
-            job.update;
         }
     }
 
@@ -107,16 +115,6 @@ template registerQueues(QueueTypes...)
             this.settings = settings;
         }
 
-        private Tid nextWorker()
-        {
-            auto worker = workers[currentWorker];
-            currentWorker++;
-            if (currentWorker >= workers.length)
-                currentWorker = 0;
-
-            return worker;
-        }
-
         void start()
         {
             handleMigrations();
@@ -124,24 +122,10 @@ template registerQueues(QueueTypes...)
             for (int i = 0; i < settings.workersCount; i++)
                 workers ~= spawnLinked(&worker, i+1);
 
-            Job[] jobs;
+            infof("Started %d worker(s)", settings.workersCount);
             while (true)
             {
-                jobs = Job.listNew;
-                if (jobs.length > 0)
-                    infof("Received %d job(s)", jobs.length);
-
-                foreach (job; jobs)
-                {
-                    auto nw = nextWorker;
-                    infof("Job %d assigned to Worker %d", job.id, currentWorker);
-                    job.state = "assigned";
-                    job.threadId = currentWorker;
-                    job.update;
-
-                    nw.send(cast(immutable) job);
-                }
-
+                // TODO: Monitor the workers
                 Thread.sleep(settings.interval.seconds);
             }
         }

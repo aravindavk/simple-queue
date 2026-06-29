@@ -1,8 +1,7 @@
-module simple_queue.models.db_versions_postgres;
+module simple_queue.models.db_versions;
 
-version (Postgres):
 
-import simple_queue.models.helpers_postgres;
+import simple_queue.models.helpers;
 
 struct DbVersion
 {
