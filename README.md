@@ -129,12 +129,12 @@ Thats all! Build and start both the apps.
 
 ```
 dub build
-DATABASE_URL=... ./webapp
+SIMPLE_QUEUE_DB_URL=... ./webapp
 ```
 
 ```
 dub build :worker
-DATABASE_URL=... ./webapp-worker
+SIMPLE_QUEUE_DB_URL=... ./webapp-worker
 ```
 
-If the jobs uses database then, `DATABASE_URL` should be same for both app and the worker.
+If the jobs uses database then, `DATABASE_URL` or any other env variable should be same for both app and the worker.

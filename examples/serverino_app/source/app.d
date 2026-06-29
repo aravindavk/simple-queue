@@ -6,6 +6,7 @@ import serverino;
 import jobs;
 
 @endpoint
+@route!"/task"
 void reportHandler(Request request, Output output)
 {
     auto report = new ReportGenerateJob;
