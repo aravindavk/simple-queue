@@ -36,24 +36,34 @@ struct Job
         enforceDB(rs2.length > 0, "Failed to add the job");
     }
 
-    void recordComplete()
+    void recordComplete(bool preserveFinished=true)
     {
         beginTx;
         scope(success) endTxWithSuccess;
         scope(failure) endTxWithFailure;
 
-        string query = q"[
+        string query;
+
+        query = "DELETE FROM simpleQueueClaimedJobs WHERE jobId = $1";
+        execute(query, id);
+
+        if (!preserveFinished)
+        {
+            query = "DELETE FROM simpleQueueJobs WHERE id = $1";
+            execute(query, id);
+        }
+        else
+        {
+            query = q"[
             UPDATE simpleQueueJobs
             SET state = 'complete',
                 durationMs = $1,
                 finishedAt = current_timestamp,
                 updatedAt = current_timestamp
             WHERE id = $2
-        ]";
-        execute(query, durationMs, id);
-
-        query = "DELETE FROM simpleQueueClaimedJobs WHERE jobId = $1";
-        execute(query, id);
+            ]";
+            execute(query, durationMs, id);
+        }
     }
 
     static void beginTx(QuerySettings settings = QuerySettings.init)

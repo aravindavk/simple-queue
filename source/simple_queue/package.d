@@ -85,7 +85,7 @@ template registerQueues(QueueTypes...)
             {
                 payload.perform;
                 job.durationMs = (Clock.currTime(UTC()) - startTime).total!"msecs";
-                job.recordComplete;
+                job.recordComplete(preserveFinished: settings.preserveFinishedJobs);
             }
             catch (Exception ex)
             {
@@ -99,6 +99,7 @@ template registerQueues(QueueTypes...)
     struct SimpleQueuePoolSettings
     {
         int workersCount = 3;
+        bool preserveFinishedJobs = true;
     }
 
     class SimpleQueuePool
