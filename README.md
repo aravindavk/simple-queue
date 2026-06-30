@@ -42,8 +42,8 @@ void userCreateHandler(HTTPServerRequest request, HTTPServerResponse response)
     mailer.subject = "Welcome to Awesome app";
     mailer.body = welcomeEmailContent(user);
     
-    mailer.performLater;
-    
+    auto job = mailer.performLater;
+
     response.writeJsonBody(user);
 }
 ```
@@ -62,7 +62,7 @@ void userCreateHandler(Request request, Output output)
     mailer.subject = "Welcome to Awesome app";
     mailer.body = welcomeEmailContent(user);
     
-    mailer.performLater;
+    auto job = mailer.performLater;
     
     output.write("User created successfully");
 }
@@ -80,8 +80,8 @@ void userCreateHandler(HttpRequestContext ctx)
     mailer.subject = "Welcome to Awesome app";
     mailer.body = welcomeEmailContent(user);
     
-    mailer.performLater;
-    
+    auto job = mailer.performLater;
+
     ctx.response.write("User created successfully");
 }
 ```
@@ -119,6 +119,8 @@ int main()
 {
     SimpleQueuePoolSettings settings;
     settings.workersCount = 3;
+    settings.preserveFinishedJobs = true; // Default
+
     auto pool = new SimpleQueuePool(settings);
     pool.start;
     return 0;
@@ -137,4 +139,4 @@ dub build :worker
 SIMPLE_QUEUE_DB_URL=... ./webapp-worker
 ```
 
-If the jobs uses database then, `DATABASE_URL` or any other env variable should be same for both app and the worker.
+If the jobs uses other database then, `DATABASE_URL` or any other env variable should be same for both app and the worker.
