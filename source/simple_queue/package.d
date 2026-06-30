@@ -26,12 +26,14 @@ template registerQueues(QueueTypes...)
     import std.stdio;
     import std.logger;
     import std.meta;
-    import core.time;
+    import core.time : msecs, seconds;
     import std.datetime : Clock, UTC;
     import std.conv;
     import std.concurrency;
     import core.thread : Thread;
     import std.json;
+    import std.file : thisExePath;
+    import std.format : format;
 
     import json_serialization;
 
@@ -58,16 +60,16 @@ template registerQueues(QueueTypes...)
         payload.perform;
     }
 
-    void worker(int workerId)
+    void startWorker(SimpleQueuePoolSettings settings, int workerId)
     {
-        infof("Started worker %d", workerId);
+        infof("Started [id: %d]", workerId);
 
         while (true)
         {
             auto job_ = Job.getNew(workerId);
             if (job_.isNull)
             {
-                Thread.sleep(dur!("seconds")(5));
+                Thread.sleep(1.seconds);
                 continue;
             }
 
@@ -75,7 +77,7 @@ template registerQueues(QueueTypes...)
 
             auto startTime = Clock.currTime(UTC());
             auto payload = parseJSON(job.payload);
-            tracef("Worker %d found a Job(%s)", workerId, payload["_name"]);
+            tracef("Found a Job [id: %d, job: %s]", workerId, payload["_name"]);
 
             try
             {
@@ -95,20 +97,16 @@ template registerQueues(QueueTypes...)
     struct SimpleQueuePoolSettings
     {
         int workersCount = 3;
-        int interval = 1;
     }
 
     class SimpleQueuePool
     {
-        Tid[] workers;
+        Pid[] workers;
         int currentWorker = 0;
         SimpleQueuePoolSettings settings;
 
         this(SimpleQueuePoolSettings settings = SimpleQueuePoolSettings.init)
         {
-            if (settings.interval <= 0)
-                settings.interval = 1;
-
             if (settings.workersCount <= 0)
                 settings.workersCount = 1;
 
@@ -117,16 +115,50 @@ template registerQueues(QueueTypes...)
 
         void start()
         {
+            if (environment.get("SIMPLE_QUEUE_WORKER", "0") == "1")
+            {
+                startWorker(
+                    settings, environment.get("SIMPLE_QUEUE_WORKER_ID").to!int);
+                return;
+            }
+
             handleMigrations();
 
-            for (int i = 0; i < settings.workersCount; i++)
-                workers ~= spawnLinked(&worker, i+1);
+            // Self executable path
+            string exe = thisExePath();
 
-            infof("Started %d worker(s)", settings.workersCount);
+            foreach (i; 0 .. settings.workersCount)
+            {
+                auto pid = spawnProcess(
+                    [exe, "/", "worker", format("[id: %d]", i)],
+                    stdin, stdout, stderr,
+                    ["SIMPLE_QUEUE_WORKER" : "1",
+                     "SIMPLE_QUEUE_WORKER_ID": i.to!string]
+                    );
+                workers ~= pid;
+            }
+
+            // Wait for any child, restart it if it dies unexpectedly
             while (true)
             {
-                // TODO: Monitor the workers
-                Thread.sleep(settings.interval.seconds);
+                foreach (idx, pid; workers)
+                {
+                    auto res = tryWait(pid);
+                    if (res.terminated)
+                    {
+                        infof("Worker exited, restarting.. [id: %s, status: %s]",
+                              idx, res.status);
+
+                        workers[idx] = spawnProcess(
+                            [exe, "/", "worker", format("[id: %d]", idx)],
+                            stdin, stdout, stderr,
+                            ["SIMPLE_QUEUE_WORKER" : "1",
+                             "SIMPLE_QUEUE_WORKER_ID": idx.to!string]
+                            );
+                    }
+                }
+
+                Thread.sleep(500.msecs);
             }
         }
     }
