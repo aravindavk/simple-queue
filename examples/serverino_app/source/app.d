@@ -1,4 +1,4 @@
-import std.stdio;
+import std.format : format;
 
 import simple_queue;
 import serverino;
@@ -12,10 +12,10 @@ void reportHandler(Request request, Output output)
     auto report = new ReportGenerateJob;
     report.path = "/tmp/report.txt";
 
-    report.performLater;
+    auto jobId = report.performLater;
 
     output.status = 202;
-    output.write("Report generation queued");
+    output.write(format("Report generation queued (Job ID: %s)", jobId));
 }
 
 mixin ServerinoMain;

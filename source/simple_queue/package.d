@@ -9,7 +9,7 @@ interface SimpleQueue
     void perform();
 }
 
-void performLater(T)(T jobdata)
+long performLater(T)(T jobdata)
 {
     import json_serialization;
 
@@ -19,6 +19,8 @@ void performLater(T)(T jobdata)
     job.payload = payload.toString;
 
     job.enqueue;
+
+    return job.id;
 }
 
 template registerQueues(QueueTypes...)
