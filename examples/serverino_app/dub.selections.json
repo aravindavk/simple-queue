@@ -5,15 +5,15 @@
 		"derelict-pq": "4.0.0",
 		"derelict-util": "3.0.0-beta.2",
 		"dpq2": "1.1.7",
-		"dpq2-serialization": "0.2.1",
-		"json-serialization": {"path":"../../../json-serialization-d"},
+		"dpq2-serialization": "0.2.2",
+		"json-serialization": "0.1.0",
 		"money": "3.0.2",
-		"serverino": "0.7.10",
+		"serverino": "0.7.21",
 		"simple-queue": {"path":"../../"},
 		"simplejob": {"path":"../../"},
 		"stdx-allocator": "2.77.5",
-		"vibe-container": "1.3.1",
-		"vibe-d": "0.10.0",
-		"vibe-serialization": "1.0.4"
+		"vibe-container": "1.7.1",
+		"vibe-d": "0.10.3",
+		"vibe-serialization": "1.2.0"
 	}
 }
